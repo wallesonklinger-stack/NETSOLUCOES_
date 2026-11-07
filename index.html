@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetSoluções Telecom - Gestão de Clientes & Financeiro</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              500: '#10b981',
+              600: '#059669',
+              dark: '#0B0F17',
+              card: '#161D2A',
+              border: '#242F42',
+              accent: '#3B82F6'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Estilos personalizados com tema escuro profissional inspirado nas planilhas de telecom */
+    body {
+      background-color: #0b0f17;
+      color: #e2e8f0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#0b0f17] text-slate-100 antialiased selection:bg-blue-600 selection:text-white">
+
+  <!-- TOPO / HEADER -->
+  <header class="border-b border-[#242f42] bg-[#121824]/90 backdrop-blur sticky top-0 z-30 px-4 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4 shadow-lg shadow-black/20">
+    <div class="flex items-center gap-3">
+      <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+        <i class="fa-solid fa-wifi text-lg"></i>
+      </div>
+      <div>
+        <h1 class="font-extrabold text-lg lg:text-xl tracking-tight text-white flex items-center gap-2">
+          NETSOLUÇÕES <span class="text-blue-400 font-semibold text-xs px-2 py-0.5 rounded bg-blue-950/70 border border-blue-800">TELECOM</span>
+        </h1>
+        <p class="text-xs text-slate-400 font-medium">Controle de Ramais, VLANs & Cobranças</p>
+      </div>
+    </div>
+
+    <!-- Ações Topo -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <button onclick="openModalAdd()" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white px-3.5 py-2 rounded-lg font-medium text-xs lg:text-sm flex items-center gap-2 transition shadow-lg shadow-emerald-950/40 border border-emerald-500/30">
+        <i class="fa-solid fa-user-plus"></i>
+        <span>Novo Cliente</span>
+      </button>
+
+      <button onclick="exportData()" title="Exportar Backup JSON" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-lg text-xs lg:text-sm font-medium border border-slate-700 flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-download"></i>
+        <span class="hidden sm:inline">Backup</span>
+      </button>
+
+      <label title="Restaurar Backup" class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-lg text-xs lg:text-sm font-medium border border-slate-700 flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-upload"></i>
+        <span class="hidden sm:inline">Importar</span>
+        <input type="file" id="importInput" accept=".json" onchange="importData(event)" class="hidden">
+      </label>
+
+      <button onclick="resetDefaultsConfirm()" title="Restaurar dados padrão da planilha" class="bg-red-950/40 hover:bg-red-900/50 text-red-300 px-2.5 py-2 rounded-lg text-xs border border-red-800/50 transition">
+        <i class="fa-solid fa-rotate-left"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="flex-1 p-3 sm:p-5 lg:p-7 max-w-[1700px] w-full mx-auto space-y-6">
+
+    <!-- CARDS DE MÉTRICAS / KPIS -->
+    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4">
+      <!-- Total Clientes -->
+      <div class="bg-[#161d2a] p-3.5 rounded-xl border border-[#242f42] shadow-sm relative overflow-hidden group hover:border-slate-500 transition">
+        <div class="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
+          <span>Assinantes</span>
+          <i class="fa-solid fa-users text-slate-500 group-hover:text-blue-400 transition"></i>
+        </div>
+        <div class="text-2xl font-black text-white" id="statTotalClients">0</div>
+        <div class="text-[11px] text-slate-400 mt-1 font-mono" id="statTotalPrevisto">Prev: R$ 0,00</div>
+      </div>
+
+      <!-- Pagos -->
+      <div class="bg-[#161d2a] p-3.5 rounded-xl border border-emerald-900/60 shadow-sm relative overflow-hidden group hover:border-emerald-500 transition">
+        <div class="flex items-center justify-between text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-1">
+          <span>Pagos (✓)</span>
+          <i class="fa-solid fa-circle-check text-emerald-500"></i>
+        </div>
+        <div class="text-2xl font-black text-emerald-400" id="statPagos">0</div>
+        <div class="text-[11px] text-emerald-500 mt-1 font-mono font-bold" id="statTotalArrecadado">R$ 0,00</div>
+      </div>
+
+      <!-- Em Aberto / Pendentes -->
+      <div class="bg-[#161d2a] p-3.5 rounded-xl border border-amber-900/60 shadow-sm relative overflow-hidden group hover:border-amber-500 transition">
+        <div class="flex items-center justify-between text-amber-400 text-xs font-semibold uppercase tracking-wider mb-1">
+          <span>Em Aberto</span>
+          <i class="fa-solid fa-clock text-amber-500"></i>
+        </div>
+        <div class="text-2xl font-black text-amber-400" id="statPendentes">0</div>
+        <div class="text-[11px] text-amber-500 mt-1 font-mono" id="statTotalPendente">R$ 0,00</div>
+      </div>
+
+      <!-- Vencidas -->
+      <div class="bg-[#161d2a] p-3.5 rounded-xl border border-rose-900/60 shadow-sm relative overflow-hidden group hover:border-rose-500 transition">
+        <div class="flex items-center justify-between text-rose-400 text-xs font-semibold uppercase tracking-wider mb-1">
+          <span>Vencidas (X)</span>
+          <i class="fa-solid fa-triangle-exclamation text-rose-500"></i>
+        </div>
+        <div class="text-2xl font-black text-rose-400" id="statVencidas">0</div>
+        <div class="text-[11px] text-rose-500 mt-1 font-mono" id="statTotalVencido">R$ 0,00</div>
+      </div>
+
+      <!-- Vencem Hoje -->
+      <div class="bg-[#161d2a] p-3.5 rounded-xl border border-blue-900/60 shadow-sm relative overflow-hidden group hover:border-blue-500 transition">
+        <div class="flex items-center justify-between text-blue-400 text-xs font-semibold uppercase tracking-wider mb-1">
+          <span>Vence Hoje</span>
+          <i class="fa-solid fa-calendar-day text-blue-500"></i>
+        </div>
+        <div class="text-2xl font-black text-blue-400" id="statVenceHoje">0</div>
+        <div class="text-[11px] text-blue-400 mt-1 font-mono" id="statTotalHoje">R$ 0,00</div>
+      </div>
+
+      <!-- Cortados -->
+      <div class="bg-[#161d2a] p-3.5 rounded-xl border border-purple-900/60 shadow-sm relative overflow-hidden group hover:border-purple-500 transition">
+        <div class="flex items-center justify-between text-purple-300 text-xs font-semibold uppercase tracking-wider mb-1">
+          <span>Cortados (✂)</span>
+          <i class="fa-solid fa-scissors text-purple-400"></i>
+        </div>
+        <div class="text-2xl font-black text-purple-400" id="statCortados">0</div>
+        <div class="text-[11px] text-purple-400/80 mt-1 font-mono" id="statTotalCortado">R$ 0,00</div>
+      </div>
+    </section>
+
+    <!-- BARRA DE FILTROS E BUSCA -->
+    <section class="bg-[#161d2a] border border-[#242f42] rounded-xl p-4 shadow-sm space-y-3">
+      <div class="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
+        <!-- Campo Busca -->
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input 
+            type="text" 
+            id="searchInput" 
+            oninput="handleFilterChange()" 
+            placeholder="Buscar por nome do cliente, telefone ou observação..." 
+            class="w-full bg-[#0d121c] border border-slate-700/80 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          >
+        </div>
+
+        <!-- Filtros Rápidos -->
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Filtro Ramal/VLAN -->
+          <div class="relative">
+            <select id="filterRamal" onchange="handleFilterChange()" class="bg-[#0d121c] border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-500 font-medium">
+              <option value="ALL">Todos os Ramais / VLANs</option>
+            </select>
+          </div>
+
+          <!-- Filtro CTO -->
+          <div class="relative">
+            <select id="filterCto" onchange="handleFilterChange()" class="bg-[#0d121c] border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-500 font-medium">
+              <option value="ALL">Todas as CTOs</option>
+              <option value="CTO 1">CTO 1</option>
+              <option value="CTO 2">CTO 2</option>
+              <option value="CTO 3">CTO 3</option>
+              <option value="CTO 4">CTO 4</option>
+              <option value="CTO 5">CTO 5</option>
+              <option value="CTO 6">CTO 6</option>
+              <option value="CTO 7">CTO 7</option>
+              <option value="CTO 8">CTO 8</option>
+            </select>
+          </div>
+
+          <!-- Filtro Status -->
+          <div class="relative">
+            <select id="filterStatus" onchange="handleFilterChange()" class="bg-[#0d121c] border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2.5 focus:outline-none focus:border-blue-500 font-medium">
+              <option value="ALL">Todos os Status</option>
+              <option value="PAGO">Pago (✓)</option>
+              <option value="ABERTO">Em Aberto (Pendente)</option>
+              <option value="VENCIDA">Vencidas (Atrasados)</option>
+              <option value="HOJE">Vence Hoje</option>
+              <option value="CORTADO">Cortado (✂)</option>
+            </select>
+          </div>
+
+          <!-- Limpar Filtros -->
+          <button onclick="clearFilters()" class="text-xs text-slate-400 hover:text-white px-2.5 py-2 rounded border border-transparent hover:border-slate-700 transition" title="Limpar Filtros">
+            <i class="fa-solid fa-filter-circle-xmark mr-1"></i> Limpar
+          </button>
+        </div>
+      </div>
+
+      <!-- Barra de Ações Rápidas em Massa -->
+      <div class="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+        <div class="flex items-center gap-2">
+          <span>Filtrando: <strong class="text-white" id="countFiltered">0</strong> de <strong class="text-white" id="countTotal">0</strong> registros</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="openMassNotificationModal()" class="text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-950/30 border border-emerald-800/40">
+            <i class="fa-brands fa-whatsapp"></i> Lembrete em Massa
+          </button>
+          <button onclick="exportToCSV()" class="text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-950/30 border border-blue-800/40">
+            <i class="fa-solid fa-file-excel"></i> Exportar CSV
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- LISTAGEM POR RAMAL / TABELA PRINCIPAL -->
+    <section id="recordsContainer" class="space-y-6">
+      <!-- Inserido dinamicamente via JavaScript -->
+    </section>
+
+  </main>
+
+  <!-- MODAL: ADICIONAR / EDITAR CLIENTE -->
+  <div id="modalClient" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-[#161d2a] border border-[#242f42] rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden my-6">
+      <div class="px-6 py-4 border-b border-[#242f42] flex items-center justify-between bg-[#121824]">
+        <h3 id="modalTitle" class="text-lg font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-user-pen text-blue-500"></i>
+          <span>Editar Cliente</span>
+        </h3>
+        <button onclick="closeModalClient()" class="text-slate-400 hover:text-white text-lg w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-800 transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="formClient" onsubmit="handleSaveClient(event)" class="p-6 space-y-4">
+        <input type="hidden" id="clientId">
+
+        <!-- Ramal / VLAN -->
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Ramal / VLAN / Setor</label>
+          <div class="flex gap-2">
+            <select id="clientRamalSelect" onchange="toggleCustomRamal(this.value)" class="flex-1 bg-[#0d121c] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+              <!-- Opções dinâmicas -->
+            </select>
+            <input type="text" id="clientRamalCustom" placeholder="Ou digite um novo Ramal..." class="hidden flex-1 bg-[#0d121c] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+            <button type="button" onclick="toggleRamalInputMode()" id="btnToggleRamal" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 rounded-lg border border-slate-700 text-slate-300">
+              Novo
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Nome do Cliente -->
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Nome do Cliente *</label>
+            <input type="text" id="clientName" required placeholder="Ex: Maria Pereira" class="w-full bg-[#0d121c] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+          </div>
+
+          <!-- CTO -->
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Caixa de Atendimento (CTO) *</label>
+            <input type="text" id="clientCto" list="ctoList" required placeholder="Ex: CTO 4" class="w-full bg-[#0d121c] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+            <datalist id="ctoList">
+              <option value="CTO 1"></option>
+              <option value="CTO 2"></option>
+              <option value="CTO 3"></option>
+              <option value="CTO 4"></option>
+              <option value="CTO 5"></option>
+              <option value="CTO 6"></option>
+              <option value="CTO 7"></option>
+              <option value="CTO 8"></option>
+              <option value="CTO 9"></option>
+              <option value="CTO 10"></option>
+            </datalist>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <!-- Valor da Mensalidade -->
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Valor (R$) *</label>
+            <input type="number" step="0.01" id="clientPrice" required placeholder="130.00" class="w-full bg-[#0d121c] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 font-mono">
+          </div>
+
+          <!-- Dia de Vencimento -->
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Dia Venc. (1 a 31) *</label>
+            <input type="number" min="1" max="31" id="clientDueDay" onchange="syncDueDateFromDay()" required placeholder="30" class="w-full bg-[#0d121c] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 font-mono">
+          </div>
+
+          <!-- Data de Vencimento Completa -->
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Data Vencimento *</label>
+            <input type="date" id="clientDueDate" required class="w-full bg-[#0d121c] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 font-mono">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Status -->
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Status de Conexão / Conta *</label>
+            <select id="clientStatus" onchange="handleStatusChangeInModal(this.value)" class="w-full bg-[#0d121c] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 font-semibold">
+              <option value="PAGO">Pago (✓)</option>
+              <option value="PENDENTE">Pendente / Em Aberto</option>
+              <option value="CORTADO">Cortado (✂)</option>
+            </select>
+          </div>
+
+          <!-- Data Pagamento -->
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Data de Pagamento</label>
+            <input type="date" id="clientPaidDate" class="w-full bg-[#0d121c] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 font-mono">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Telefone / WhatsApp -->
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">WhatsApp / Telefone (DDD + Nº)</label>
+            <div class="relative">
+              <i class="fa-brands fa-whatsapp absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500 text-sm"></i>
+              <input type="text" id="clientPhone" placeholder="Ex: 92 99178-0727" class="w-full bg-[#0d121c] border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+            </div>
+          </div>
+
+          <!-- Observação -->
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Observações Internas</label>
+            <input type="text" id="clientNotes" placeholder="Ex: ONU própria, Casa dos fundos..." class="w-full bg-[#0d121c] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+          </div>
+        </div>
+
+        <!-- Botões do Modal -->
+        <div class="pt-4 border-t border-slate-800 flex items-center justify-between gap-3">
+          <button type="button" id="btnDeleteClient" onclick="handleDeleteCurrentClient()" class="text-rose-400 hover:text-rose-300 text-xs px-3 py-2 rounded-lg hover:bg-rose-950/40 border border-transparent hover:border-rose-800 transition hidden">
+            <i class="fa-solid fa-trash-can mr-1"></i> Excluir Assinante
+          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button type="button" onclick="closeModalClient()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-xs font-medium transition">
+              Cancelar
+            </button>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg text-xs font-bold transition shadow-lg shadow-blue-900/40">
+              Salvar Dados
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: WHATSAPP / COBRANÇA DIRETA -->
+  <div id="modalWhatsapp" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-[#161d2a] border border-[#242f42] rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-[#242f42] flex items-center justify-between bg-[#121824]">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-brands fa-whatsapp text-emerald-400 text-xl"></i>
+          <span>Enviar Notificação via WhatsApp</span>
+        </h3>
+        <button onclick="closeModalWhatsapp()" class="text-slate-400 hover:text-white text-lg w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-800 transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Destinatário</label>
+          <div class="text-sm font-bold text-white" id="waClientInfo">Cliente - Telefone</div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Modelo de Mensagem</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" onclick="setTemplateMessage('lembrete')" class="bg-slate-800 hover:bg-slate-700 text-xs py-2 px-2 rounded border border-slate-700 text-slate-200">
+              Lembrete Venc.
+            </button>
+            <button type="button" onclick="setTemplateMessage('vencido')" class="bg-slate-800 hover:bg-slate-700 text-xs py-2 px-2 rounded border border-slate-700 text-slate-200">
+              Atraso / Vencida
+            </button>
+            <button type="button" onclick="setTemplateMessage('recibo')" class="bg-slate-800 hover:bg-slate-700 text-xs py-2 px-2 rounded border border-slate-700 text-slate-200">
+              Confirmar Pagto
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Texto da Mensagem</label>
+          <textarea id="waMessageText" rows="6" class="w-full bg-[#0d121c] border border-slate-700 rounded-lg p-3 text-xs sm:text-sm text-white focus:outline-none focus:border-emerald-500"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModalWhatsapp()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-xs font-medium">
+            Fechar
+          </button>
+          <button type="button" onclick="sendWhatsappDirect()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 shadow-lg shadow-emerald-950/50">
+            <i class="fa-brands fa-whatsapp text-sm"></i>
+            <span>Abrir no WhatsApp</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST DE NOTIFICAÇÃO -->
+  <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transform translate-y-24 opacity-0 transition-all duration-300 z-50">
+    <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+    <span id="toastMsg" class="text-xs sm:text-sm font-medium">Mensagem do sistema</span>
+  </div>
+
+  <!-- JAVASCRIPT: LÓGICA COMPLETA -->
+  <script>
+    // DADOS INICIAIS BASEADOS NAS IMAGENS DA PLANILHA (NETSOLUÇÕES TELECOM)
+    const INITIAL_DATA = [
+      // 2. TARRAFINHA (R104)
+      { id: "101", ramal: "2. TARRAFINHA (R104)", name: "Ariadna", cto: "CTO 2", dueDate: "2026-11-30", dueDay: 30, status: "PAGO", price: 130.00, phone: "92 99178-0727", paidDate: "2026-11-02", notes: "" },
+      { id: "102", ramal: "2. TARRAFINHA (R104)", name: "Rose", cto: "CTO 2", dueDate: "2026-11-03", dueDay: 3, status: "PAGO", price: 130.00, phone: "", paidDate: "2026-10-30", notes: "" },
+      { id: "103", ramal: "2. TARRAFINHA (R104)", name: "Gessiane", cto: "CTO 2", dueDate: "2026-11-30", dueDay: 30, status: "PAGO", price: 130.00, phone: "", paidDate: "2026-10-30", notes: "" },
+      { id: "104", ramal: "2. TARRAFINHA (R104)", name: "Marilene", cto: "CTO 3", dueDate: "2026-11-30", dueDay: 30, status: "PAGO", price: 130.00, phone: "97 99152-1046", paidDate: "2026-10-30", notes: "" },
+      { id: "105", ramal: "2. TARRAFINHA (R104)", name: "Tainá", cto: "CTO 3", dueDate: "2026-11-28", dueDay: 28, status: "PAGO", price: 130.00, phone: "", paidDate: "2026-11-04", notes: "" },
+      { id: "106", ramal: "2. TARRAFINHA (R104)", name: "Frank", cto: "CTO 4", dueDate: "2026-11-16", dueDay: 16, status: "PAGO", price: 130.00, phone: "92 99376-8055", paidDate: "2026-10-16", notes: "" },
+      { id: "107", ramal: "2. TARRAFINHA (R104)", name: "Emergência", cto: "CTO 4", dueDate: "2026-11-30", dueDay: 30, status: "PAGO", price: 130.00, phone: "", paidDate: "2026-11-03", notes: "" },
+      { id: "108", ramal: "2. TARRAFINHA (R104)", name: "Emergência-H", cto: "CTO 4", dueDate: "2026-11-30", dueDay: 30, status: "PAGO", price: 150.00, phone: "97 99196-0429", paidDate: "2026-10-31", notes: "" },
+      { id: "109", ramal: "2. TARRAFINHA (R104)", name: "Neide", cto: "CTO 4", dueDate: "2026-11-07", dueDay: 7, status: "PENDENTE", price: 130.00, phone: "92 99269-7429", paidDate: "", notes: "" },
+      { id: "110", ramal: "2. TARRAFINHA (R104)", name: "Charle", cto: "CTO 4", dueDate: "2026-11-04", dueDay: 4, status: "PENDENTE", price: 130.00, phone: "92 99161-9665", paidDate: "", notes: "" },
+      { id: "111", ramal: "2. TARRAFINHA (R104)", name: "Jasinei", cto: "CTO 4", dueDate: "2026-11-02", dueDay: 2, status: "PAGO", price: 130.00, phone: "", paidDate: "2026-11-01", notes: "" },
+      { id: "112", ramal: "2. TARRAFINHA (R104)", name: "Pescador", cto: "CTO 4", dueDate: "2026-11-06", dueDay: 6, status: "PAGO", price: 150.00, phone: "", paidDate: "2026-10-06", notes: "" },
+      { id: "113", ramal: "2. TARRAFINHA (R104)", name: "Doca", cto: "CTO 5", dueDate: "2026-11-30", dueDay: 30, status: "PAGO", price: 130.00, phone: "97 99187-7705", paidDate: "2026-11-03", notes: "" },
+      { id: "114", ramal: "2. TARRAFINHA (R104)", name: "Edno", cto: "CTO 5", dueDate: "2026-11-08", dueDay: 8, status: "PENDENTE", price: 130.00, phone: "92 99485-6012", paidDate: "", notes: "" },
+      { id: "115", ramal: "2. TARRAFINHA (R104)", name: "Ary", cto: "CTO 5", dueDate: "2026-11-30", dueDay: 30, status: "PENDENTE", price: 130.00, phone: "97 98410-4142", paidDate: "", notes: "" },
+      { id: "116", ramal: "2. TARRAFINHA (R104)", name: "Barroso", cto: "CTO 5", dueDate: "2026-11-14", dueDay: 14, status: "PENDENTE", price: 130.00, phone: "", paidDate: "", notes: "" },
+      { id: "117", ramal: "2. TARRAFINHA (R104)", name: "Rodrigo2", cto: "CTO 5", dueDate: "2026-11-04", dueDay: 4, status: "PENDENTE", price: 130.00, phone: "97 99135-0196", paidDate: "", notes: "" },
+      { id: "118", ramal: "2. TARRAFINHA (R104)", name: "Raimundo Bur", cto: "CTO 6", dueDate: "2026-11-04", dueDay: 4, status: "PAGO", price: 130.00, phone: "97 98408-1330", paidDate: "2026-11-03", notes: "" },
+      { id: "119", ramal: "2. TARRAFINHA (R104)", name: "Patricia", cto: "CTO 6", dueDate: "2026-11-05", dueDay: 5, status: "PAGO", price: 130.00, phone: "92 99289-3926", paidDate: "2026-11-05", notes: "" },
+      { id: "120", ramal: "2. TARRAFINHA (R104)", name: "Fernanda2", cto: "CTO 6", dueDate: "2026-11-03", dueDay: 3, status: "PAGO", price: 110.00, phone: "", paidDate: "2026-11-05", notes: "" },
+      { id: "121", ramal: "2. TARRAFINHA (R104)", name: "Gilmar", cto: "CTO 6", dueDate: "2026-11-03", dueDay: 3, status: "PENDENTE", price: 110.00, phone: "", paidDate: "", notes: "" },
+      { id: "122", ramal: "2. TARRAFINHA (R104)", name: "Falcão (Janders)", cto: "CTO 6", dueDate: "2026-11-08", dueDay: 8, status: "PENDENTE", price: 130.00, phone: "", paidDate: "", notes: "" },
+      { id: "123", ramal: "2. TARRAFINHA (R104)", name: "Vinicius", cto: "CTO 7", dueDate: "2026-11-06", dueDay: 6, status: "CORTADO", price: 110.00, phone: "", paidDate: "", notes: "Aguardando pagamento" },
+
+      // 4. RAMAL ASSEMBLEIA (A2-CDO-04) VLAN_102
+      { id: "201", ramal: "4. RAMAL ASSEMBLEIA (A2-CDO-04) VLAN_102", name: "Anamara", cto: "CTO 1", dueDate: "2026-11-30", dueDay: 30, status: "PAGO", price: 130.00, phone: "", paidDate: "2026-10-28", notes: "" },
+      { id: "202", ramal: "4. RAMAL ASSEMBLEIA (A2-CDO-04) VLAN_102", name: "William", cto: "CTO 1", dueDate: "2026-11-22", dueDay: 22, status: "PENDENTE", price: 130.00, phone: "", paidDate: "", notes: "" },
+      { id: "203", ramal: "4. RAMAL ASSEMBLEIA (A2-CDO-04) VLAN_102", name: "Railson", cto: "CTO 1", dueDate: "2026-11-07", dueDay: 7, status: "PENDENTE", price: 150.00, phone: "", paidDate: "", notes: "" },
+      { id: "204", ramal: "4. RAMAL ASSEMBLEIA (A2-CDO-04) VLAN_102", name: "Leandro 2", cto: "CTO 4", dueDate: "2026-11-29", dueDay: 29, status: "PAGO", price: 130.00, phone: "", paidDate: "2026-11-03", notes: "" },
+      { id: "205", ramal: "4. RAMAL ASSEMBLEIA (A2-CDO-04) VLAN_102", name: "Erlane Rai", cto: "CTO 5", dueDate: "2026-11-30", dueDay: 30, status: "PAGO", price: 130.00, phone: "", paidDate: "2026-10-30", notes: "" },
+      { id: "206", ramal: "4. RAMAL ASSEMBLEIA (A2-CDO-04) VLAN_102", name: "Aqueles", cto: "CTO 5", dueDate: "2026-11-04", dueDay: 4, status: "PENDENTE", price: 130.00, phone: "", paidDate: "", notes: "" },
+      { id: "207", ramal: "4. RAMAL ASSEMBLEIA (A2-CDO-04) VLAN_102", name: "Elionete", cto: "CTO 5", dueDate: "2026-11-01", dueDay: 1, status: "PENDENTE", price: 180.00, phone: "", paidDate: "", notes: "Cobrança enviada" },
+      { id: "208", ramal: "4. RAMAL ASSEMBLEIA (A2-CDO-04) VLAN_102", name: "Francieliton", cto: "CTO 7", dueDate: "2026-11-06", dueDay: 6, status: "PENDENTE", price: 130.00, phone: "", paidDate: "", notes: "" },
+      { id: "209", ramal: "4. RAMAL ASSEMBLEIA (A2-CDO-04) VLAN_102", name: "Solange Marque", cto: "CTO 7", dueDate: "2026-11-01", dueDay: 1, status: "PENDENTE", price: 110.00, phone: "", paidDate: "", notes: "" },
+
+      // 4. RAMAL MANELITO (A3-R1-CDO-01) VLAN_101
+      { id: "301", ramal: "4. RAMAL MANELITO (A3-R1-CDO-01) VLAN_101", name: "Caboclo", cto: "CTO 1", dueDate: "2026-11-20", dueDay: 20, status: "PENDENTE", price: 130.00, phone: "", paidDate: "", notes: "" },
+      { id: "302", ramal: "4. RAMAL MANELITO (A3-R1-CDO-01) VLAN_101", name: "Emili", cto: "CTO 1", dueDate: "2026-11-25", dueDay: 25, status: "CORTADO", price: 130.00, phone: "", paidDate: "", notes: "" },
+      { id: "303", ramal: "4. RAMAL MANELITO (A3-R1-CDO-01) VLAN_101", name: "ONU-Tony", cto: "CTO 2", dueDate: "2026-11-15", dueDay: 15, status: "PAGO", price: 130.00, phone: "97 9165-8184", paidDate: "2026-10-26", notes: "" },
+      { id: "304", ramal: "4. RAMAL MANELITO (A3-R1-CDO-01) VLAN_101", name: "Adriano", cto: "CTO 2", dueDate: "2026-11-25", dueDay: 25, status: "PAGO", price: 130.00, phone: "", paidDate: "2026-10-27", notes: "" },
+      { id: "305", ramal: "4. RAMAL MANELITO (A3-R1-CDO-01) VLAN_101", name: "Renato", cto: "CTO 3", dueDate: "2026-11-30", dueDay: 30, status: "CORTADO", price: 130.00, phone: "", paidDate: "", notes: "" },
+      { id: "306", ramal: "4. RAMAL MANELITO (A3-R1-CDO-01) VLAN_101", name: "Vânia", cto: "CTO 7", dueDate: "2026-11-30", dueDay: 30, status: "CORTADO", price: 130.00, phone: "", paidDate: "", notes: "" },
+
+      // 4. RAMAL Prox.CCI (A2-CDO-04 R)
+      { id: "401", ramal: "4. RAMAL Prox.CCI (A2-CDO-04 R)", name: "Samira", cto: "CTO 2", dueDate: "2026-11-30", dueDay: 30, status: "CORTADO", price: 130.00, phone: "", paidDate: "", notes: "" },
+      { id: "402", ramal: "4. RAMAL Prox.CCI (A2-CDO-04 R)", name: "Rodrigo3", cto: "CTO 4", dueDate: "2026-11-10", dueDay: 10, status: "CORTADO", price: 130.00, phone: "", paidDate: "", notes: "" },
+      { id: "403", ramal: "4. RAMAL Prox.CCI (A2-CDO-04 R)", name: "Daniel", cto: "CTO 4", dueDate: "2026-11-28", dueDay: 28, status: "PAGO", price: 130.00, phone: "", paidDate: "2026-11-06", notes: "" },
+
+      // 5. CENTRO (A1-R1-CDO1) VLAN_101
+      { id: "501", ramal: "5. CENTRO (A1-R1-CDO1) VLAN_101", name: "Moises-60", cto: "CTO 1", dueDate: "2026-11-30", dueDay: 30, status: "PAGO", price: 130.00, phone: "92 99329-8611", paidDate: "2026-10-30", notes: "" },
+      { id: "502", ramal: "5. CENTRO (A1-R1-CDO1) VLAN_101", name: "Moça *Rafael", cto: "CTO 1", dueDate: "2026-11-09", dueDay: 9, status: "PENDENTE", price: 130.00, phone: "", paidDate: "", notes: "" },
+      { id: "503", ramal: "5. CENTRO (A1-R1-CDO1) VLAN_101", name: "Francisco pintor", cto: "CTO 2", dueDate: "2026-11-01", dueDay: 1, status: "PAGO", price: 130.00, phone: "97 98461-7981", paidDate: "2026-11-04", notes: "" },
+      { id: "504", ramal: "5. CENTRO (A1-R1-CDO1) VLAN_101", name: "Isnaira", cto: "CTO 2", dueDate: "2026-11-20", dueDay: 20, status: "CORTADO", price: 130.00, phone: "92 99163-4548", paidDate: "", notes: "" },
+      { id: "505", ramal: "5. CENTRO (A1-R1-CDO1) VLAN_101", name: "Mendes", cto: "CTO 4", dueDate: "2026-11-16", dueDay: 16, status: "CORTADO", price: 110.00, phone: "", paidDate: "", notes: "" },
+      { id: "506", ramal: "5. CENTRO (A1-R1-CDO1) VLAN_101", name: "Janderson", cto: "CTO 6", dueDate: "2026-11-20", dueDay: 20, status: "CORTADO", price: 130.00, phone: "92 99472-7386", paidDate: "", notes: "" },
+
+      // 7. G. VITÓRIA (R9-VLAN_104)
+      { id: "601", ramal: "7. G. VITÓRIA (R9-VLAN_104)", name: "Luan", cto: "CTO 1", dueDate: "2026-11-24", dueDay: 24, status: "PAGO", price: 130.00, phone: "", paidDate: "2026-10-26", notes: "" },
+      { id: "602", ramal: "7. G. VITÓRIA (R9-VLAN_104)", name: "Wellington", cto: "CTO 1", dueDate: "2026-11-06", dueDay: 6, status: "PENDENTE", price: 130.00, phone: "", paidDate: "", notes: "" },
+      { id: "603", ramal: "7. G. VITÓRIA (R9-VLAN_104)", name: "Eva", cto: "CTO 1", dueDate: "2026-11-28", dueDay: 28, status: "PAGO", price: 110.00, phone: "", paidDate: "2026-11-05", notes: "" },
+      { id: "604", ramal: "7. G. VITÓRIA (R9-VLAN_104)", name: "Serjane", cto: "CTO 2", dueDate: "2026-11-30", dueDay: 30, status: "PAGO", price: 130.00, phone: "92 99468-0787", paidDate: "2026-10-30", notes: "" },
+      { id: "605", ramal: "7. G. VITÓRIA (R9-VLAN_104)", name: "Reis", cto: "CTO 6", dueDate: "2026-11-23", dueDay: 23, status: "CORTADO", price: 130.00, phone: "", paidDate: "", notes: "" },
+
+      // 8. NOVA CONQUISTA (A1-R6-CDO_06) VLAN_103
+      { id: "701", ramal: "8. NOVA CONQUISTA (A1-R6-CDO_06) VLAN_103", name: "Italo", cto: "CTO 5", dueDate: "2026-11-28", dueDay: 28, status: "PAGO", price: 110.00, phone: "", paidDate: "2026-11-05", notes: "" },
+      { id: "702", ramal: "8. NOVA CONQUISTA (A1-R6-CDO_06) VLAN_103", name: "Campos (Adamo)", cto: "CTO 5", dueDate: "2026-11-01", dueDay: 1, status: "PAGO", price: 130.00, phone: "", paidDate: "2026-11-02", notes: "" },
+      { id: "703", ramal: "8. NOVA CONQUISTA (A1-R6-CDO_06) VLAN_103", name: "Ezequiel", cto: "CTO 5", dueDate: "2026-11-21", dueDay: 21, status: "PAGO", price: 110.00, phone: "", paidDate: "2026-10-21", notes: "" },
+
+      // 9. CHÁCARA (A2-R2-CDO-02) VLAN_102
+      { id: "801", ramal: "9. CHÁCARA (A2-R2-CDO-02) VLAN_102", name: "Mario", cto: "CTO 1", dueDate: "2026-11-30", dueDay: 30, status: "PAGO", price: 130.00, phone: "", paidDate: "2026-11-01", notes: "" },
+      { id: "802", ramal: "9. CHÁCARA (A2-R2-CDO-02) VLAN_102", name: "Carlos", cto: "CTO 2", dueDate: "2026-11-14", dueDay: 14, status: "PENDENTE", price: 130.00, phone: "", paidDate: "", notes: "" },
+      { id: "803", ramal: "9. CHÁCARA (A2-R2-CDO-02) VLAN_102", name: "Aguinaldina", cto: "CTO 5", dueDate: "2026-11-30", dueDay: 30, status: "PENDENTE", price: 130.00, phone: "", paidDate: "", notes: "" }
+    ];
+
+    // ESTADO DA APLICAÇÃO
+    let clients = [];
+    let currentSelectedClient = null;
+
+    // Inicialização
+    window.addEventListener('DOMContentLoaded', () => {
+      loadData();
+      renderApp();
+    });
+
+    // Carregar dados com LocalStorage
+    function loadData() {
+      const stored = localStorage.getItem('netsolucoes_clients_data');
+      if (stored) {
+        try {
+          clients = JSON.parse(stored);
+        } catch (e) {
+          console.error("Erro ao carregar dados locais, usando padrão.", e);
+          clients = [...INITIAL_DATA];
+          saveData();
+        }
+      } else {
+        clients = [...INITIAL_DATA];
+        saveData();
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem('netsolucoes_clients_data', JSON.stringify(clients));
+    }
+
+    // Identificar a situação real baseada na data de hoje
+    // Formato da data no sistema: YYYY-MM-DD
+    function getTodayString() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function getFinancialState(client) {
+      if (client.status === 'CORTADO') return 'CORTADO';
+      if (client.status === 'PAGO') return 'PAGO';
+
+      const today = getTodayString();
+      if (client.dueDate < today) {
+        return 'VENCIDA';
+      } else if (client.dueDate === today) {
+        return 'HOJE';
+      }
+      return 'ABERTO';
+    }
+
+    // Formatar moeda brasileira
+    function formatMoney(value) {
+      return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    // Formatar data para exibição DD/MM/AAAA
+    function formatDateBR(dateStr) {
+      if (!dateStr) return '-';
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+      return dateStr;
+    }
+
+    // RENDERIZAÇÃO COMPLETA
+    function renderApp() {
+      renderRamalFilterOptions();
+      renderKPIs();
+      renderClientTables();
+    }
+
+    // Atualizar dropdown de Ramais disponíveis
+    function renderRamalFilterOptions() {
+      const ramalFilter = document.getElementById('filterRamal');
+      const ramalModalSelect = document.getElementById('clientRamalSelect');
+      const currentSelected = ramalFilter.value;
+
+      // Pegar todos os ramais únicos
+      const ramais = [...new Set(clients.map(c => c.ramal))].sort();
+
+      // Opções do filtro principal
+      let filterOpts = '<option value="ALL">Todos os Ramais / VLANs</option>';
+      ramais.forEach(r => {
+        filterOpts += `<option value="${r}">${r}</option>`;
+      });
+      ramalFilter.innerHTML = filterOpts;
+      ramalFilter.value = currentSelected;
+
+      // Opções do modal
+      let modalOpts = '';
+      ramais.forEach(r => {
+        modalOpts += `<option value="${r}">${r}</option>`;
+      });
+      modalOpts += '<option value="__NOVO__">+ Criar Novo Ramal / VLAN...</option>';
+      ramalModalSelect.innerHTML = modalOpts;
+    }
+
+    // CÁLCULO E RENDERIZAÇÃO DOS KPIS
+    function renderKPIs() {
+      const totalClients = clients.length;
+      let totalPrevisto = 0;
+      let countPagos = 0;
+      let totalPago = 0;
+      let countPendentes = 0;
+      let totalPendente = 0;
+      let countVencidas = 0;
+      let totalVencido = 0;
+      let countHoje = 0;
+      let totalHoje = 0;
+      let countCortados = 0;
+      let totalCortado = 0;
+
+      clients.forEach(c => {
+        const val = Number(c.price) || 0;
+        totalPrevisto += val;
+        const state = getFinancialState(c);
+
+        if (state === 'PAGO') {
+          countPagos++;
+          totalPago += val;
+        } else if (state === 'VENCIDA') {
+          countVencidas++;
+          totalVencido += val;
+        } else if (state === 'HOJE') {
+          countHoje++;
+          totalHoje += val;
+        } else if (state === 'ABERTO') {
+          countPendentes++;
+          totalPendente += val;
+        } else if (state === 'CORTADO') {
+          countCortados++;
+          totalCortado += val;
+        }
+      });
+
+      document.getElementById('statTotalClients').textContent = totalClients;
+      document.getElementById('statTotalPrevisto').textContent = `Prev: ${formatMoney(totalPrevisto)}`;
+
+      document.getElementById('statPagos').textContent = countPagos;
+      document.getElementById('statTotalArrecadado').textContent = formatMoney(totalPago);
+
+      document.getElementById('statPendentes').textContent = countPendentes;
+      document.getElementById('statTotalPendente').textContent = formatMoney(totalPendente);
+
+      document.getElementById('statVencidas').textContent = countVencidas;
+      document.getElementById('statTotalVencido').textContent = formatMoney(totalVencido);
+
+      document.getElementById('statVenceHoje').textContent = countHoje;
+      document.getElementById('statTotalHoje').textContent = formatMoney(totalHoje);
+
+      document.getElementById('statCortados').textContent = countCortados;
+      document.getElementById('statTotalCortado').textContent = formatMoney(totalCortado);
+
+      document.getElementById('countTotal').textContent = totalClients;
+    }
+
+    // FILTROS
+    function getFilteredClients() {
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+      const ramalFilter = document.getElementById('filterRamal').value;
+      const ctoFilter = document.getElementById('filterCto').value;
+      const statusFilter = document.getElementById('filterStatus').value;
+
+      return clients.filter(c => {
+        // Busca texto
+        const matchText = (
+          (c.name || '').toLowerCase().includes(query) ||
+          (c.phone || '').toLowerCase().includes(query) ||
+          (c.notes || '').toLowerCase().includes(query) ||
+          (c.cto || '').toLowerCase().includes(query)
+        );
+        if (!matchText) return false;
+
+        // Filtro Ramal
+        if (ramalFilter !== 'ALL' && c.ramal !== ramalFilter) return false;
+
+        // Filtro CTO
+        if (ctoFilter !== 'ALL' && c.cto !== ctoFilter) return false;
+
+        // Filtro Status
+        const state = getFinancialState(c);
+        if (statusFilter !== 'ALL') {
+          if (statusFilter === 'PAGO' && state !== 'PAGO') return false;
+          if (statusFilter === 'ABERTO' && state !== 'ABERTO') return false;
+          if (statusFilter === 'VENCIDA' && state !== 'VENCIDA') return false;
+          if (statusFilter === 'HOJE' && state !== 'HOJE') return false;
+          if (statusFilter === 'CORTADO' && state !== 'CORTADO') return false;
+        }
+
+        return true;
+      });
+    }
+
+    function handleFilterChange() {
+      renderClientTables();
+    }
+
+    function clearFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('filterRamal').value = 'ALL';
+      document.getElementById('filterCto').value = 'ALL';
+      document.getElementById('filterStatus').value = 'ALL';
+      renderClientTables();
+    }
+
+    // RENDERIZAR TABELAS SEPARADAS POR RAMAL (Estilo Planilha Telecom)
+    function renderClientTables() {
+      const container = document.getElementById('recordsContainer');
+      const filtered = getFilteredClients();
+      document.getElementById('countFiltered').textContent = filtered.length;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="bg-[#161d2a] border border-[#242f42] rounded-2xl p-12 text-center text-slate-400">
+            <i class="fa-solid fa-folder-open text-4xl text-slate-600 mb-3 block"></i>
+            <h4 class="text-base font-bold text-white mb-1">Nenhum cliente encontrado</h4>
+            <p class="text-xs">Tente ajustar seus termos de pesquisa ou remover os filtros aplicados.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Agrupar por Ramal
+      const grouped = {};
+      filtered.forEach(item => {
+        if (!grouped[item.ramal]) grouped[item.ramal] = [];
+        grouped[item.ramal].push(item);
+      });
+
+      let html = '';
+
+      // Percorrer cada grupo de Ramal
+      for (const ramal in grouped) {
+        const groupItems = grouped[ramal];
+        const ramalTotalValor = groupItems.reduce((acc, curr) => acc + (Number(curr.price) || 0), 0);
+        const ramalPagos = groupItems.filter(i => getFinancialState(i) === 'PAGO').length;
+
+        html += `
+          <div class="bg-[#161d2a] border border-[#242f42] rounded-xl overflow-hidden shadow-md">
+            <!-- Header do Ramal (Estilo barra de título da planilha) -->
+            <div class="bg-gradient-to-r from-[#1a2335] to-[#121824] px-4 py-3 border-b border-[#242f42] flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50"></span>
+                <h3 class="font-bold text-white text-sm sm:text-base tracking-wide">${escapeHtml(ramal)}</h3>
+              </div>
+              <div class="flex items-center gap-3 text-xs">
+                <span class="bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md border border-slate-700">
+                  Assinantes: <strong class="text-white">${groupItems.length}</strong>
+                </span>
+                <span class="bg-emerald-950/60 text-emerald-300 px-2.5 py-1 rounded-md border border-emerald-800/40">
+                  Pagos: <strong>${ramalPagos}/${groupItems.length}</strong>
+                </span>
+                <span class="bg-blue-950/60 text-blue-300 px-2.5 py-1 rounded-md border border-blue-800/40 font-mono">
+                  Total: <strong>${formatMoney(ramalTotalValor)}</strong>
+                </span>
+              </div>
+            </div>
+
+            <!-- Tabela de Clientes do Ramal -->
+            <div class="overflow-x-auto custom-scrollbar">
+              <table class="w-full text-left text-xs whitespace-nowrap">
+                <thead class="bg-[#0f1520] text-slate-400 font-semibold uppercase tracking-wider border-b border-[#242f42] text-[11px]">
+                  <tr>
+                    <th class="py-3 px-3 w-8">#</th>
+                    <th class="py-3 px-3">Cliente</th>
+                    <th class="py-3 px-3">CTO</th>
+                    <th class="py-3 px-3">Vencimento</th>
+                    <th class="py-3 px-3 text-center">Dia</th>
+                    <th class="py-3 px-3">Status Cobrança</th>
+                    <th class="py-3 px-3 text-right">Valor</th>
+                    <th class="py-3 px-3">Telefone / WhatsApp</th>
+                    <th class="py-3 px-3">Data Pagamento</th>
+                    <th class="py-3 px-3 text-center">Ações Rápidas</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-[#202a3c]">
+                  ${groupItems.map((c, index) => renderClientRow(c, index)).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    // RENDERIZAR UMA LINHA DA TABELA (COM CORES DA PLANILHA)
+    function renderClientRow(client, index) {
+      const state = getFinancialState(client);
+
+      // Badge visual do Status com fidelidade às cores das planilhas enviadas:
+      let badgeHtml = '';
+      if (state === 'PAGO') {
+        badgeHtml = `
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#00e676]/20 text-[#00e676] border border-[#00e676]/40 font-bold text-[11px]">
+            <i class="fa-solid fa-check"></i> Pago (✓)
+          </span>
+        `;
+      } else if (state === 'VENCIDA') {
+        badgeHtml = `
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-rose-600/30 text-rose-300 border border-rose-500 font-bold text-[11px] animate-pulse">
+            <i class="fa-solid fa-triangle-exclamation"></i> VENCIDA
+          </span>
+        `;
+      } else if (state === 'HOJE') {
+        badgeHtml = `
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-600/30 text-blue-300 border border-blue-500 font-bold text-[11px]">
+            <i class="fa-regular fa-clock"></i> VENCE HOJE
+          </span>
+        `;
+      } else if (state === 'CORTADO') {
+        badgeHtml = `
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-700 text-purple-300 border border-purple-800 font-bold text-[11px]">
+            <i class="fa-solid fa-scissors"></i> Cortado (✂)
+          </span>
+        `;
+      } else {
+        // EM ABERTA
+        badgeHtml = `
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 font-bold text-[11px]">
+            <i class="fa-solid fa-hourglass-half"></i> EM ABERTA
+          </span>
+        `;
+      }
+
+      const rowHighlight = state === 'VENCIDA' ? 'bg-rose-950/10' : (state === 'CORTADO' ? 'opacity-85' : '');
+
+      return `
+        <tr class="hover:bg-[#1a2334]/70 transition group ${rowHighlight}">
+          <td class="py-2.5 px-3 text-slate-500 font-mono text-[11px]">${index + 1}</td>
+          
+          <!-- Nome com visual destaque idêntico ao da planilha amarela/laranja -->
+          <td class="py-2.5 px-3">
+            <div class="flex items-center gap-2">
+              <span class="w-1.5 h-6 rounded-full bg-amber-500"></span>
+              <div>
+                <span class="font-bold text-slate-100 text-xs sm:text-sm group-hover:text-blue-400 transition cursor-pointer" onclick="openModalEdit('${client.id}')">
+                  ${escapeHtml(client.name)}
+                </span>
+                ${client.notes ? `<div class="text-[10px] text-slate-400 truncate max-w-xs">${escapeHtml(client.notes)}</div>` : ''}
+              </div>
+            </div>
+          </td>
+
+          <!-- CTO -->
+          <td class="py-2.5 px-3">
+            <span class="bg-slate-800/90 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30 font-semibold font-mono text-[11px]">
+              ${escapeHtml(client.cto)}
+            </span>
+          </td>
+
+          <!-- Vencimento -->
+          <td class="py-2.5 px-3 font-mono text-slate-300">
+            ${formatDateBR(client.dueDate)}
+          </td>
+
+          <!-- Dia -->
+          <td class="py-2.5 px-3 text-center font-mono font-bold text-slate-400">
+            ${client.dueDay || client.dueDate.split('-')[2]}
+          </td>
+
+          <!-- Status -->
+          <td class="py-2.5 px-3">
+            <div class="cursor-pointer" onclick="toggleQuickStatus('${client.id}')" title="Clique para alternar status rápido">
+              ${badgeHtml}
+            </div>
+          </td>
+
+          <!-- Valor -->
+          <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-200">
+            ${formatMoney(client.price)}
+          </td>
+
+          <!-- Telefone -->
+          <td class="py-2.5 px-3">
+            ${client.phone ? `
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono text-slate-300">${escapeHtml(client.phone)}</span>
+                <button onclick="openWhatsappModalFor('${client.id}')" title="Enviar mensagem no WhatsApp" class="text-emerald-400 hover:text-emerald-300 p-1 rounded hover:bg-emerald-950/50">
+                  <i class="fa-brands fa-whatsapp text-sm"></i>
+                </button>
+              </div>
+            ` : `
+              <span class="text-slate-600 italic">Sem fone</span>
+            `}
+          </td>
+
+          <!-- Data Pagamento -->
+          <td class="py-2.5 px-3 font-mono text-slate-400 text-[11px]">
+            ${client.paidDate ? `<span class="text-emerald-400 font-semibold">${formatDateBR(client.paidDate)}</span>` : '-'}
+          </td>
+
+          <!-- Ações Rápidas -->
+          <td class="py-2.5 px-3 text-center">
+            <div class="flex items-center justify-center gap-1">
+              <!-- Botão Marcar Pago com 1 clique -->
+              ${client.status !== 'PAGO' ? `
+                <button onclick="quickMarkPaid('${client.id}')" title="Confirmar Pagamento Hoje" class="p-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-800/80 text-emerald-400 border border-emerald-800/50 transition">
+                  <i class="fa-solid fa-check text-xs"></i>
+                </button>
+              ` : `
+                <button onclick="quickMarkPending('${client.id}')" title="Desfazer e marcar como Pendente" class="p-1.5 rounded-lg bg-yellow-950/50 hover:bg-yellow-800/60 text-yellow-400 border border-yellow-800/40 transition">
+                  <i class="fa-solid fa-rotate-left text-xs"></i>
+                </button>
+              `}
+
+              <!-- Editar -->
+              <button onclick="openModalEdit('${client.id}')" title="Editar Completo" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700 transition">
+                <i class="fa-solid fa-pen text-xs"></i>
+              </button>
+
+              <!-- Cortar / Reativar -->
+              <button onclick="quickToggleCut('${client.id}')" title="${client.status === 'CORTADO' ? 'Reativar Cliente' : 'Cortar Sinal'}" class="p-1.5 rounded-lg ${client.status === 'CORTADO' ? 'bg-purple-900/50 text-purple-300 border-purple-700' : 'bg-slate-800 text-slate-400 hover:text-purple-400'} border border-slate-700 transition">
+                <i class="fa-solid fa-scissors text-xs"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    // AUXILIAR CONTRA XSS
+    function escapeHtml(string) {
+      if (!string) return '';
+      return String(string)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // AÇÕES RÁPIDAS COM 1 CLIQUE
+    function quickMarkPaid(id) {
+      const idx = clients.findIndex(c => c.id === id);
+      if (idx !== -1) {
+        clients[idx].status = 'PAGO';
+        clients[idx].paidDate = getTodayString();
+        saveData();
+        renderApp();
+        showToast(`Pagamento registrado para ${clients[idx].name}!`, 'check');
+      }
+    }
+
+    function quickMarkPending(id) {
+      const idx = clients.findIndex(c => c.id === id);
+      if (idx !== -1) {
+        clients[idx].status = 'PENDENTE';
+        clients[idx].paidDate = '';
+        saveData();
+        renderApp();
+        showToast(`Status revertido para Pendente.`, 'info');
+      }
+    }
+
+    function quickToggleCut(id) {
+      const idx = clients.findIndex(c => c.id === id);
+      if (idx !== -1) {
+        if (clients[idx].status === 'CORTADO') {
+          clients[idx].status = 'PENDENTE';
+          showToast(`Cliente ${clients[idx].name} REATIVADO com sucesso!`, 'check');
+        } else {
+          clients[idx].status = 'CORTADO';
+          showToast(`Sinal cortado para ${clients[idx].name}!`, 'scissors');
+        }
+        saveData();
+        renderApp();
+      }
+    }
+
+    function toggleQuickStatus(id) {
+      const idx = clients.findIndex(c => c.id === id);
+      if (idx === -1) return;
+      const c = clients[idx];
+      if (c.status === 'PAGO') {
+        c.status = 'PENDENTE';
+        c.paidDate = '';
+      } else if (c.status === 'PENDENTE') {
+        c.status = 'PAGO';
+        c.paidDate = getTodayString();
+      } else if (c.status === 'CORTADO') {
+        c.status = 'PENDENTE';
+      }
+      saveData();
+      renderApp();
+      showToast(`Status alterado: ${c.name}`, 'check');
+    }
+
+    // MODAL DE CADASTRO / EDIÇÃO
+    function openModalAdd() {
+      document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-user-plus text-emerald-500"></i><span>Novo Assinante</span>';
+      document.getElementById('clientId').value = '';
+      document.getElementById('clientName').value = '';
+      document.getElementById('clientCto').value = 'CTO 1';
+      document.getElementById('clientPrice').value = '130.00';
+      document.getElementById('clientDueDay').value = '10';
+      
+      // Data padrão deste mês
+      const today = new Date();
+      const yr = today.getFullYear();
+      const mo = String(today.getMonth() + 1).padStart(2, '0');
+      document.getElementById('clientDueDate').value = `${yr}-${mo}-10`;
+      
+      document.getElementById('clientStatus').value = 'PENDENTE';
+      document.getElementById('clientPaidDate').value = '';
+      document.getElementById('clientPhone').value = '';
+      document.getElementById('clientNotes').value = '';
+
+      document.getElementById('btnDeleteClient').classList.add('hidden');
+      document.getElementById('modalClient').classList.remove('hidden');
+
+      // Seletor de Ramais
+      renderRamalFilterOptions();
+      const ramalSelect = document.getElementById('clientRamalSelect');
+      if (ramalSelect.options.length > 1) {
+        ramalSelect.selectedIndex = 0;
+      }
+      document.getElementById('clientRamalCustom').classList.add('hidden');
+      document.getElementById('clientRamalSelect').classList.remove('hidden');
+    }
+
+    function openModalEdit(id) {
+      const c = clients.find(item => item.id === id);
+      if (!c) return;
+
+      currentSelectedClient = c;
+      document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-user-pen text-blue-500"></i><span>Editar Assinante</span>';
+      document.getElementById('clientId').value = c.id;
+      document.getElementById('clientName').value = c.name;
+      document.getElementById('clientCto').value = c.cto;
+      document.getElementById('clientPrice').value = c.price;
+      document.getElementById('clientDueDay').value = c.dueDay || (c.dueDate ? c.dueDate.split('-')[2] : 10);
+      document.getElementById('clientDueDate').value = c.dueDate;
+      document.getElementById('clientStatus').value = c.status;
+      document.getElementById('clientPaidDate').value = c.paidDate || '';
+      document.getElementById('clientPhone').value = c.phone || '';
+      document.getElementById('clientNotes').value = c.notes || '';
+
+      renderRamalFilterOptions();
+      const ramalSelect = document.getElementById('clientRamalSelect');
+      ramalSelect.value = c.ramal;
+      if (ramalSelect.value !== c.ramal) {
+        // Ramal personalizado
+        document.getElementById('clientRamalCustom').value = c.ramal;
+        document.getElementById('clientRamalCustom').classList.remove('hidden');
+        document.getElementById('clientRamalSelect').classList.add('hidden');
+      } else {
+        document.getElementById('clientRamalCustom').classList.add('hidden');
+        document.getElementById('clientRamalSelect').classList.remove('hidden');
+      }
+
+      document.getElementById('btnDeleteClient').classList.remove('hidden');
+      document.getElementById('modalClient').classList.remove('hidden');
+    }
+
+    function closeModalClient() {
+      document.getElementById('modalClient').classList.add('hidden');
+      currentSelectedClient = null;
+    }
+
+    function syncDueDateFromDay() {
+      const day = parseInt(document.getElementById('clientDueDay').value);
+      if (day >= 1 && day <= 31) {
+        const currentDate = document.getElementById('clientDueDate').value || getTodayString();
+        const parts = currentDate.split('-');
+        const y = parts[0];
+        const m = parts[1];
+        const formattedDay = String(day).padStart(2, '0');
+        document.getElementById('clientDueDate').value = `${y}-${m}-${formattedDay}`;
+      }
+    }
+
+    function handleStatusChangeInModal(val) {
+      const paidDateInput = document.getElementById('clientPaidDate');
+      if (val === 'PAGO' && !paidDateInput.value) {
+        paidDateInput.value = getTodayString();
+      } else if (val !== 'PAGO') {
+        paidDateInput.value = '';
+      }
+    }
+
+    function toggleCustomRamal(val) {
+      if (val === '__NOVO__') {
+        document.getElementById('clientRamalSelect').classList.add('hidden');
+        document.getElementById('clientRamalCustom').classList.remove('hidden');
+        document.getElementById('clientRamalCustom').focus();
+      }
+    }
+
+    function toggleRamalInputMode() {
+      const select = document.getElementById('clientRamalSelect');
+      const input = document.getElementById('clientRamalCustom');
+      if (input.classList.contains('hidden')) {
+        select.classList.add('hidden');
+        input.classList.remove('hidden');
+        input.focus();
+      } else {
+        input.classList.add('hidden');
+        select.classList.remove('hidden');
+      }
+    }
+
+    function handleSaveClient(e) {
+      e.preventDefault();
+      const id = document.getElementById('clientId').value;
+
+      // Determinar ramal
+      let ramal = '';
+      const inputCustom = document.getElementById('clientRamalCustom');
+      if (!inputCustom.classList.contains('hidden') && inputCustom.value.trim() !== '') {
+        ramal = inputCustom.value.trim();
+      } else {
+        ramal = document.getElementById('clientRamalSelect').value;
+      }
+      if (!ramal || ramal === '__NOVO__') {
+        showToast('Informe o Ramal / VLAN!', 'error');
+        return;
+      }
+
+      const clientData = {
+        id: id || 'cli_' + Date.now(),
+        ramal: ramal,
+        name: document.getElementById('clientName').value.trim(),
+        cto: document.getElementById('clientCto').value.trim(),
+        price: parseFloat(document.getElementById('clientPrice').value) || 0,
+        dueDay: parseInt(document.getElementById('clientDueDay').value) || 1,
+        dueDate: document.getElementById('clientDueDate').value,
+        status: document.getElementById('clientStatus').value,
+        paidDate: document.getElementById('clientPaidDate').value,
+        phone: document.getElementById('clientPhone').value.trim(),
+        notes: document.getElementById('clientNotes').value.trim()
+      };
+
+      if (id) {
+        // Atualizar
+        const index = clients.findIndex(c => c.id === id);
+        if (index !== -1) {
+          clients[index] = clientData;
+          showToast(`Dados de ${clientData.name} atualizados com sucesso!`, 'check');
+        }
+      } else {
+        // Criar Novo
+        clients.unshift(clientData);
+        showToast(`Novo cliente adicionado: ${clientData.name}`, 'check');
+      }
+
+      saveData();
+      closeModalClient();
+      renderApp();
+    }
+
+    function handleDeleteCurrentClient() {
+      const id = document.getElementById('clientId').value;
+      if (!id) return;
+      const client = clients.find(c => c.id === id);
+      const clientName = client ? client.name : "o cliente";
+
+      // Mensagem embutida com modal customizado (sem window.confirm)
+      if (showCustomConfirm(`Deseja realmente remover permanentemente o assinante "${clientName}"?`, () => {
+        clients = clients.filter(c => c.id !== id);
+        saveData();
+        closeModalClient();
+        renderApp();
+        showToast(`Cliente removido do sistema.`, 'trash');
+      }));
+    }
+
+    // MODAL DE CONFIRMAÇÃO SEGURO (Substituto do confirm)
+    function showCustomConfirm(message, onConfirm) {
+      // Cria elemento dinâmico de confirmação
+      const confirmBox = document.createElement('div');
+      confirmBox.className = 'fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4';
+      confirmBox.innerHTML = `
+        <div class="bg-[#161d2a] border border-rose-800/60 rounded-xl p-5 max-w-sm w-full text-center space-y-4 shadow-2xl">
+          <i class="fa-solid fa-triangle-exclamation text-rose-500 text-3xl"></i>
+          <h4 class="font-bold text-white text-base">Atenção!</h4>
+          <p class="text-xs text-slate-300">${escapeHtml(message)}</p>
+          <div class="flex items-center justify-center gap-3 pt-2">
+            <button id="cancelConfirmBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-4 py-2 rounded-lg font-medium">Cancelar</button>
+            <button id="okConfirmBtn" class="bg-rose-600 hover:bg-rose-500 text-white text-xs px-4 py-2 rounded-lg font-bold">Sim, Confirmar</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(confirmBox);
+
+      confirmBox.querySelector('#cancelConfirmBtn').onclick = () => {
+        document.body.removeChild(confirmBox);
+      };
+      confirmBox.querySelector('#okConfirmBtn').onclick = () => {
+        document.body.removeChild(confirmBox);
+        onConfirm();
+      };
+    }
+
+    // MODAL WHATSAPP & MODELOS
+    let waActiveClient = null;
+
+    function openWhatsappModalFor(id) {
+      const c = clients.find(item => item.id === id);
+      if (!c) return;
+      waActiveClient = c;
+
+      document.getElementById('waClientInfo').textContent = `${c.name} (${c.cto}) - ${c.phone || 'Sem número registrado'}`;
+      
+      const state = getFinancialState(c);
+      if (state === 'PAGO') {
+        setTemplateMessage('recibo');
+      } else if (state === 'VENCIDA') {
+        setTemplateMessage('vencido');
+      } else {
+        setTemplateMessage('lembrete');
+      }
+
+      document.getElementById('modalWhatsapp').classList.remove('hidden');
+    }
+
+    function closeModalWhatsapp() {
+      document.getElementById('modalWhatsapp').classList.add('hidden');
+      waActiveClient = null;
+    }
+
+    function setTemplateMessage(type) {
+      if (!waActiveClient) return;
+      const c = waActiveClient;
+      const valorStr = formatMoney(c.price);
+      const dataVenc = formatDateBR(c.dueDate);
+
+      let msg = '';
+      if (type === 'lembrete') {
+        msg = `Olá ${c.name}, tudo bem? 📡 Aqui é da NETSOLUÇÕES TELECOM.\n\nLembramos que sua mensalidade de internet no valor de ${valorStr} vence em ${dataVenc}.\n\nSe já efetuou o pagamento, desconsidere este aviso. Caso necessite da chave Pix, estamos à disposição!`;
+      } else if (type === 'vencido') {
+        msg = `Prezado(a) ${c.name}, comunicamos da NETSOLUÇÕES TELECOM que sua mensalidade de internet (${valorStr}) com vencimento em ${dataVenc} consta em aberto.\n\nPor favor, envie o comprovante ou entre em contato para evitarmos a redução de velocidade ou corte automático do seu sinal. 🚀`;
+      } else if (type === 'recibo') {
+        msg = `Olá ${c.name}! Confirmamos com sucesso o recebimento da sua mensalidade NETSOLUÇÕES TELECOM no valor de ${valorStr}.\n\nObrigado pela pontualidade e preferência! Conexão 100% ativa e estabilizada. 🟢`;
+      }
+
+      document.getElementById('waMessageText').value = msg;
+    }
+
+    function sendWhatsappDirect() {
+      if (!waActiveClient) return;
+      const phoneRaw = (waActiveClient.phone || '').replace(/\D/g, '');
+      const text = document.getElementById('waMessageText').value.trim();
+
+      if (!phoneRaw) {
+        showToast('Cliente não possui número de telefone salvo!', 'error');
+        return;
+      }
+
+      // Adiciona código do Brasil se faltar
+      let fullPhone = phoneRaw;
+      if (fullPhone.length === 10 || fullPhone.length === 11) {
+        fullPhone = '55' + fullPhone;
+      }
+
+      const encodedText = encodeURIComponent(text);
+      const url = `https://api.whatsapp.com/send?phone=${fullPhone}&text=${encodedText}`;
+      window.open(url, '_blank');
+      closeModalWhatsapp();
+    }
+
+    function openMassNotificationModal() {
+      const filtered = getFilteredClients();
+      const pendentesOuVencidos = filtered.filter(c => {
+        const st = getFinancialState(c);
+        return (st === 'VENCIDA' || st === 'ABERTO' || st === 'HOJE') && c.phone;
+      });
+
+      if (pendentesOuVencidos.length === 0) {
+        showToast('Nenhum cliente com débito e telefone nesta listagem.', 'info');
+        return;
+      }
+
+      showToast(`Encontrados ${pendentesOuVencidos.length} clientes para contato via WhatsApp.`, 'info');
+      // Abre o primeiro da fila
+      openWhatsappModalFor(pendentesOuVencidos[0].id);
+    }
+
+    // EXPORTAÇÃO CSV
+    function exportToCSV() {
+      const filtered = getFilteredClients();
+      if (filtered.length === 0) {
+        showToast('Nada para exportar!', 'info');
+        return;
+      }
+
+      let csv = 'Ramal;Nome;CTO;Vencimento;Dia;Status;Valor;Telefone;Data_Pagamento;Observacoes\r\n';
+      filtered.forEach(c => {
+        const state = getFinancialState(c);
+        csv += `"${c.ramal}";"${c.name}";"${c.cto}";"${formatDateBR(c.dueDate)}";"${c.dueDay || ''}";"${state}";"${c.price}";"${c.phone || ''}";"${formatDateBR(c.paidDate)}";"${c.notes || ''}"\r\n`;
+      });
+
+      const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `NetSolucoes_Clientes_${getTodayString()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('Relatório CSV exportado!', 'check');
+    }
+
+    // BACKUP & RESTAURAÇÃO
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(clients, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `netsolucoes_backup_${getTodayString()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('Backup JSON descarregado com sucesso!', 'check');
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (Array.isArray(imported)) {
+            clients = imported;
+            saveData();
+            renderApp();
+            showToast('Banco de dados restaurado com sucesso!', 'check');
+          } else {
+            showToast('Arquivo JSON inválido!', 'error');
+          }
+        } catch (err) {
+          showToast('Erro ao ler arquivo de backup.', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetDefaultsConfirm() {
+      showCustomConfirm("Tem certeza que deseja restaurar os dados originais da planilha? Todas as alterações manuais serão sobrescritas.", () => {
+        clients = [...INITIAL_DATA];
+        saveData();
+        renderApp();
+        showToast('Dados restaurados para o padrão da planilha!', 'check');
+      });
+    }
+
+    // TOAST NOTIFICAÇÃO
+    function showToast(message, type = 'check') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      const toastIcon = document.getElementById('toastIcon');
+
+      toastMsg.textContent = message;
+
+      if (type === 'check') {
+        toastIcon.className = 'fa-solid fa-circle-check text-emerald-400 text-lg';
+      } else if (type === 'error') {
+        toastIcon.className = 'fa-solid fa-circle-exclamation text-rose-500 text-lg';
+      } else if (type === 'scissors') {
+        toastIcon.className = 'fa-solid fa-scissors text-purple-400 text-lg';
+      } else if (type === 'trash') {
+        toastIcon.className = 'fa-solid fa-trash text-rose-400 text-lg';
+      } else {
+        toastIcon.className = 'fa-solid fa-circle-info text-blue-400 text-lg';
+      }
+
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-24', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3500);
+    }
+  </script>
+</body>
+</html>
